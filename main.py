@@ -33,6 +33,7 @@ Other      35 mins         ⣦⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀�
 """
 
 # standard
+from typing import List
 from dataclasses import dataclass
 from random import SystemRandom
 from datetime import datetime
@@ -155,6 +156,7 @@ class WakaInput:
     show_total_time: str | bool = os.getenv('INPUT_SHOW_TOTAL') or False
     show_masked_time: str | bool = os.getenv('INPUT_SHOW_MASKED_TIME') or False
     language_count: str | bool = os.getenv('INPUT_LANGUAGE_COUNT') or "5"
+    ignore_languages: str | bool = os.getenv('INPUT_IGNORE_LANGUAGES') or "markdown,restructuredtext,json,text"
 
     def validate_input(self) -> bool:
         """
@@ -253,7 +255,7 @@ def make_graph(block_style: str, percent: float, gr_len: int, lg_nm: str = '', /
     return graph_bar
 
 
-def prep_content(stats: dict[Any, Any], language_count: str = 5, /) -> str:
+def prep_content(stats: dict[Any, Any], language_count: str = 5, ignore_languages: List[str] = [], /) -> str:
     """
     WakaReadme Prepare Markdown
     ---------------------------
@@ -291,12 +293,17 @@ def prep_content(stats: dict[Any, Any], language_count: str = 5, /) -> str:
         max((l.get('name') for l in lang_info), key=len)
         # and then don't for get to set pad_len to say 13 :)
     )
-    for idx, lang in enumerate(lang_info):
+    idx = 0
+    for lang in lang_info:
         lang_name = lang.get('name')
         # >>> add languages to filter here <<<
         # if lang_name in {...}: continue
         lang_time = lang.get('text') if wk_i.show_time else ''
         lang_ratio = lang.get('percent')
+
+        if lang_name.lower() in ignore_languages:
+            continue
+
         lang_bar = make_graph(
             wk_i.block_style, lang_ratio, wk_i.graph_length, lang_name
         )
@@ -305,6 +312,7 @@ def prep_content(stats: dict[Any, Any], language_count: str = 5, /) -> str:
             f'{lang_time: <16}{lang_bar}   ' +
             f'{lang_ratio:.2f}'.zfill(5) + ' %\n'
         )
+        idx += 1
         if idx >= int(language_count) or lang_name == 'Other':
             break
 
@@ -374,7 +382,7 @@ def churn(old_readme: str, /) -> str | None:
         sys.exit(1)
     # processing content
     try:
-        generated_content = prep_content(waka_stats, wk_i.language_count)
+        generated_content = prep_content(waka_stats, wk_i.language_count, wk_i.ignore_languages.split(","))
     except AttributeError as err:
         logger.error(f'Unable to read API data | {err}\n')
         sys.exit(1)

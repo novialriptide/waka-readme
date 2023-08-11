@@ -156,7 +156,7 @@ class WakaInput:
     show_total_time: str | bool = os.getenv('INPUT_SHOW_TOTAL') or False
     show_masked_time: str | bool = os.getenv('INPUT_SHOW_MASKED_TIME') or False
     language_count: str | bool = os.getenv('INPUT_LANGUAGE_COUNT') or "5"
-    ignore_languages: str | bool = os.getenv('INPUT_IGNORE_LANGUAGES') or "markdown,restructuredtext,json,text"
+    ignore_languages: str | bool = os.getenv('INPUT_IGNORE_LANGUAGES') or "markdown,restructuredtext,json,text,binary"
 
     def validate_input(self) -> bool:
         """

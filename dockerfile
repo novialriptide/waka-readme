@@ -1,26 +1,47 @@
-FROM python:slim-bullseye
+FROM docker.io/python:3-slim
 
-ENV PYTHONFAULTHANDLER=1 \
+ENV INPUT_GH_TOKEN \
+    INPUT_WAKATIME_API_KEY \
+    # meta
+    INPUT_API_BASE_URL \
+    INPUT_REPOSITORY \
+    # content
+    INPUT_SHOW_TITLE \
+    INPUT_SECTION_NAME \
+    INPUT_BLOCKS \
+    INPUT_CODE_LANG \
+    INPUT_TIME_RANGE \
+    INPUT_LANG_COUNT \
+    INPUT_SHOW_TIME \
+    INPUT_SHOW_TOTAL \
+    INPUT_SHOW_MASKED_TIME \
+    INPUT_STOP_AT_OTHER \
+    # commit
+    INPUT_COMMIT_MESSAGE \
+    INPUT_TARGET_BRANCH \
+    INPUT_TARGET_PATH \
+    INPUT_COMMITTER_NAME \
+    INPUT_COMMITTER_EMAIL \
+    INPUT_AUTHOR_NAME \
+    INPUT_AUTHOR_EMAIL
+
+
+ENV PATH="${PATH}:/root/.local/bin" \
+    # python
+    PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONHASHSEED=random \
     PYTHONDONTWRITEBYTECODE=1 \
-    # pip:
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    # poetry:
-    # POETRY_VERSION=1.1.14 \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_CACHE_DIR=/var/cache/pypoetry \
-    PATH=${PATH}:/root/.local/bin
+    # pip
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DEFAULT_TIMEOUT=100
 
 # copy project files
-COPY pyproject.toml poetry.lock main.py /
+COPY --chown=root:root pyproject.toml main.py /app/
 
-# install poetry & dependencies
-RUN apt-get update && apt-get install --no-install-recommends -y curl \
-    && curl -sSL https://install.python-poetry.org | python - \
-    && poetry install --no-root --no-ansi --only main
+# install dependencies
+RUN python -m pip install /app/
 
-# copy and run program
-CMD [ "poetry", "run", "python", "/main.py" ]
+# execute program
+CMD python /app/main.py
